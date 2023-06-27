@@ -42,16 +42,16 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Override
     public Result queryById(Long id) {
-//        // 缓存穿透
+        // 缓存穿透
 //        Shop shop = queryWithPassThrough(id);
 
         Shop shop = cacheClient.queryWithPassThrough(RedisConstants.CACHE_SHOP_KEY, id, Shop.class,
                 this::getById, RedisConstants.CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
-//        // 互斥锁解决缓存击穿 返回值shop可能为null
+        // 互斥锁解决缓存击穿 返回值shop可能为null
 //        Shop shop = queryWithMutex(id);
 
-//        // 逻辑过期解决缓存击穿
+        // 逻辑过期解决缓存击穿
 //        Shop shop = queryWithLogicalExpire(id);
 
 //        Shop shop = cacheClient.queryWithLogicalExpire(CACHE_SHOP_KEY, id, Shop.class,
