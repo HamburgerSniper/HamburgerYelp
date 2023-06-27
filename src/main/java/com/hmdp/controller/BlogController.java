@@ -21,28 +21,38 @@ public class BlogController {
 
     @Resource
     private IBlogService blogService;
-    @Resource
-    private IUserService userService;
 
+
+    /**
+     * 保存自己的笔记
+     *
+     * @param blog
+     * @return
+     */
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
-        UserDTO user = UserHolder.getUser();
-        blog.setUserId(user.getId());
-        // 保存探店博文
-        blogService.save(blog);
-        // 返回id
-        return Result.ok(blog.getId());
+
+        return blogService.saveBlog(blog);
     }
 
+    /**
+     * 点赞
+     *
+     * @param id
+     * @return
+     */
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
         // 修改点赞数量
-        blogService.update()
-                .setSql("liked = liked + 1").eq("id", id).update();
-        return Result.ok();
+        return blogService.likeBlog(id);
     }
 
+    /**
+     * 查询我自己发布的笔记
+     *
+     * @param current
+     * @return
+     */
     @GetMapping("/of/me")
     public Result queryMyBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
         // 获取登录用户
@@ -55,21 +65,60 @@ public class BlogController {
         return Result.ok(records);
     }
 
+    /**
+     * 主页显示
+     *
+     * @param current
+     * @return
+     */
     @GetMapping("/hot")
     public Result queryHotBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
-        // 根据用户查询
-        Page<Blog> page = blogService.query()
-                .orderByDesc("liked")
-                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-        // 获取当前页数据
-        List<Blog> records = page.getRecords();
-        // 查询用户
-        records.forEach(blog ->{
-            Long userId = blog.getUserId();
-            User user = userService.getById(userId);
-            blog.setName(user.getNickName());
-            blog.setIcon(user.getIcon());
-        });
-        return Result.ok(records);
+
+        return blogService.queryHotBlog(current);
+    }
+
+    @GetMapping("/{id}")
+    public Result queryBlogById(@PathVariable("id") Long id) {
+        return blogService.queryById(id);
+    }
+
+    /**
+     * 查询我们的点赞有哪些人 然后取排名
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/likes/{id}")
+    public Result queryBlogLikes(@PathVariable("id") Long id) {
+        return blogService.queryBlogLikes(id);
+    }
+
+    /**
+     * 查询这个用户发布了哪些笔记
+     *
+     * @param current
+     * @param id
+     * @return
+     */
+    @GetMapping("/of/user")
+    public Result queryBlogByUserId(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam("id") Long id) {
+
+        return blogService.queryBlogByUserId(current, id);
+
+    }
+
+    /**
+     * 这个是接受关注者发送的探店笔记
+     *
+     * @param max    表示这一次的最大值
+     * @param offset 表示我们要跳过的个数(第一次默认是0)
+     * @return
+     */
+    @GetMapping("of/follow") // 注意我们页面的参数是经过?拼接的 所以使用@RequestParam
+    public Result queryBlogOfFollow(@RequestParam("lastId") Long max
+            , @RequestParam(value = "offset", defaultValue = "0") Integer offset) {
+        return blogService.queryBlogOfFollow(max, offset);
     }
 }
